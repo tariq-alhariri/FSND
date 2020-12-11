@@ -114,9 +114,23 @@ def create_app(test_config=None):
             abort(422)
 
 
-
-
-
+    @app.route('/movies/<int:movie_id>', methods=['PATCH'])
+    def update_movie(movie_id):
+        try:
+            movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
+            data = request.get_json()
+            if data.get('title'):
+                movie.title=data.get('title')
+            if data.get('release_date'):
+                movie.release_date=data.get('release_date')
+            Movie.update(movie)
+            return jsonify({
+                'status_code': 200,
+                'success': True,
+                'movie': Movie.format(movie),
+                }), 200
+        except:
+            abort(404)
 
     @app.errorhandler(404)
     def not_found(error):
