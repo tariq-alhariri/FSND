@@ -92,6 +92,26 @@ def create_app(test_config=None):
         except:
             abort(404)
 
+    @app.route('/movies', methods=['POST'])
+    def add_movie():
+        data = request.get_json()
+        if (data.get('title') and data.get('release_date')):
+            new_movie = Movie(
+                title=data.get('title', None),
+                release_date=data.get('release_date', None),
+                )
+            print('----------------------> title', new_movie.title, '--------> ', new_movie.release_date)
+            try:
+                Movie.insert(new_movie)
+                return jsonify({
+                    'success': True,
+                    'status_code': 201,
+                    'question_id': new_movie.id,
+                }), 201
+            except:
+                abort(422)
+        else:
+            abort(422)
 
 
 
