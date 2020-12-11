@@ -41,6 +41,16 @@ def create_app(test_config=None):
             formated_movies.append(current_movie)
         return formated_movies
 
+    def format_movie(movie):
+        try:
+            return({
+                'id': movie.id,
+                'title': movie.title,
+                'release_date': movie.release_date
+            })
+        except:
+            abort(422)
+
     @app.after_request
     def after_request(response):
         response.headers.add(
@@ -70,7 +80,17 @@ def create_app(test_config=None):
             })), 200
 
 
-
+    @app.route('/movies/<int:movie_id>', methods=['GET'])
+    def get_movie(movie_id):
+        try:
+            movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
+            return jsonify({
+                'status_code': 200,
+                'success': True,
+                'movie': format_movie(movie),
+                }), 200
+        except:
+            abort(404)
 
 
 
