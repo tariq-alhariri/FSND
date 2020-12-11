@@ -132,6 +132,20 @@ def create_app(test_config=None):
         except:
             abort(404)
 
+    @app.route('/movies/<int:movie_id>', methods=['DELETE'])
+    def delete_movie(movie_id):
+        try:
+            movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
+            if movie:
+                Movie.delete(movie)
+            return jsonify({
+                'status_code': 200,
+                'success': True,
+                'deleted': movie_id,
+                }), 200
+        except:
+            abort(404)
+
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
