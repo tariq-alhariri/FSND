@@ -10,17 +10,21 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
     CORS(app)
-    Movies_Per_Page = 3
+    ELEMENT_By_PAGE = 3
 
-    def paginate_movies(request, selection):
+    def paginate_elemets(request, selection):
         page = request.args.get('page', 1, type=int)
-        start = (page - 1) * Movies_Per_Page
-        end = start + Movies_Per_Page
+        start = (page - 1) * ELEMENT_By_PAGE
+        end = start + ELEMENT_By_PAGE
         if start > len(selection):
             abort(404)
-        movies = [movie.format() for movie in selection]
-        current_movies = movies[start:end]
-        return current_movies
+        print('----------------------> type', isinstance(selection[0], Actor))
+        if isinstance(selection[0], Movie):
+            elemets = [movie.format() for movie in selection]
+        else:
+            elemets = [actor.format() for actor in selection]
+        current_elements = elemets[start:end]
+        return current_elements
 
         # This method id added to sort list od categories
 
@@ -41,16 +45,23 @@ def create_app(test_config=None):
             formated_movies.append(current_movie)
         return formated_movies
 
-    def format_movie(movie):
-        try:
-            return({
-                'id': movie.id,
-                'title': movie.title,
-                'release_date': movie.release_date
-            })
-        except:
-            abort(422)
+    def format_actors(actors):
+        if len(actors) == 0:
+            abort(404)
+        formated_actors = []
+        index = 0
 
+        for index in range(len(actors)):
+            
+            current_actor={
+                'id': actors[index]['id'],
+                'name': actors[index]['name'],
+                'age': actors[index]['age'],
+                'gender': actors[index]['gender'].value,
+                }
+            formated_actors.append(current_actor)
+        return formated_actors
+   
     @app.after_request
     def after_request(response):
         response.headers.add(
@@ -72,7 +83,7 @@ def create_app(test_config=None):
         except:
             abort(422)
         
-        current_movies = paginate_movies(request, movies)
+        current_movies = paginate_elemets(request, movies)
         return(jsonify({
             'success': True,
             'movies': format_movies(current_movies),
@@ -87,7 +98,7 @@ def create_app(test_config=None):
             return jsonify({
                 'status_code': 200,
                 'success': True,
-                'movie': format_movie(movie),
+                'movie': Movie.format(movie),
                 }), 200
         except:
             abort(404)
@@ -141,10 +152,38 @@ def create_app(test_config=None):
             return jsonify({
                 'status_code': 200,
                 'success': True,
-                'deleted': movie_id,
+                'deleted': movie_id ,
                 }), 200
         except:
             abort(404)
+
+    @app.route('/actors', methods=['GET'])
+    def get_actors():
+        try:
+            actors = Actor.query.order_by(Actor.name).all()
+            if len(actors) == 0:
+                abort(404)
+        except:
+            abort(422)
+        
+        current_actors = paginate_elemets(request, actors)
+        return(jsonify({
+            'success': True,
+            'actors': format_actors(current_actors),
+            'status_code': 200
+            })), 200
+    @app.route('/actors/<int:actor_id>', methods=['GET'])
+    def get_actor(actor_id):
+        try:
+            actor = Actor.query.filter(Actor.id == actor_id).one_or_none()
+            return jsonify({
+                'status_code': 200,
+                'success': True,
+                'actor': Actor.format(actor),
+                }), 200
+        except:
+            abort(404)
+
 
     @app.errorhandler(404)
     def not_found(error):
