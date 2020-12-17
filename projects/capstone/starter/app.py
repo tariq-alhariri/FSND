@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from models import Actor, Movie, setup_db
+from models import Actor, Movie, Gender, setup_db
 
 
 def create_app(test_config=None):
@@ -176,6 +176,7 @@ def create_app(test_config=None):
     def get_actor(actor_id):
         try:
             actor = Actor.query.filter(Actor.id == actor_id).one_or_none()
+            print('--------------------------------------> ',actor.gender)
             return jsonify({
                 'status_code': 200,
                 'success': True,
@@ -183,6 +184,28 @@ def create_app(test_config=None):
                 }), 200
         except:
             abort(404)
+
+    
+    @app.route('/actors', methods=['POST'])
+    def add_actor():
+        data = request.get_json()
+        if (data.get('name') and data.get('age') and data.get('gender')):
+            new_actor = Actor(
+                name=data.get('name', None),
+                age=data.get('age', None),
+                gender=(data.get('gender', None)).upper(),
+                )
+            try:
+                Actor.insert(new_actor)
+                return jsonify({
+                    'success': True,
+                    'status_code': 201,
+                    'actor_id': new_actor.id,
+                }), 201
+            except:
+                abort(422)
+        else:
+            abort(422)
 
 
     @app.errorhandler(404)
