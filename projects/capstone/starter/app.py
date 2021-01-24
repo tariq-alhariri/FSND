@@ -2,7 +2,8 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from models import Actor, Movie, Gender, setup_db
+from models import Actor, Movie, Gender,MovieActor, setup_db
+from auth import AuthError, requires_auth
 
 
 def create_app(test_config=None):
@@ -18,7 +19,6 @@ def create_app(test_config=None):
         end = start + ELEMENT_By_PAGE
         if start > len(selection):
             abort(404)
-        print('----------------------> type', isinstance(selection[0], Actor))
         if isinstance(selection[0], Movie):
             elemets = [movie.format() for movie in selection]
         else:
@@ -103,6 +103,8 @@ def create_app(test_config=None):
         except:
             abort(404)
 
+    
+
     @app.route('/movies', methods=['POST'])
     def add_movie():
         data = request.get_json()
@@ -111,7 +113,6 @@ def create_app(test_config=None):
                 title=data.get('title', None),
                 release_date=data.get('release_date', None),
                 )
-            print('----------------------> title', new_movie.title, '--------> ', new_movie.release_date)
             try:
                 Movie.insert(new_movie)
                 return jsonify({
@@ -176,7 +177,6 @@ def create_app(test_config=None):
     def get_actor(actor_id):
         try:
             actor = Actor.query.filter(Actor.id == actor_id).one_or_none()
-            print('--------------------------------------> ',actor.gender)
             return jsonify({
                 'status_code': 200,
                 'success': True,
@@ -185,6 +185,7 @@ def create_app(test_config=None):
         except:
             abort(404)
 
+    
     
     @app.route('/actors', methods=['POST'])
     def add_actor():
@@ -206,6 +207,50 @@ def create_app(test_config=None):
                 abort(422)
         else:
             abort(422)
+
+
+    @app.route('/movie_actor', methods=['POST'])
+    def connect_movie_actor():
+        data = request.get_json()
+        movie_id = data.get('movie_id', None)
+        actor_id = data.get('actor_id', None)
+        if movie_id and actor_id:
+            movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
+            actor = Actor.query.filter(Actor.id == actor_id).one_or_none()
+            
+            if movie and actor:
+                try:
+                    new_movie_actor = MovieActor(
+                        movie_id = movie_id,
+                        actor_id = actor_id
+                    )
+                    
+                    MovieActor.insert(new_movie_actor)
+                    return jsonify({
+                        'success': True,
+                        'status_code': 201,
+                    }), 201
+                except:
+                    abort(422)
+            else:
+                abort(422)
+
+        else:
+            abort(422)
+
+
+    @app.route('/movies/<int:movie_id>/actors', methods=['GET'])
+    def get_movie_actors(movie_id):
+        try:
+            actors = Movie.query.filter(Movie.id == movie_id).one_or_none().actors
+            print('------------------------------------------------>', actors[0].name)
+            return jsonify({
+                'status_code': 200,
+                'success': True,
+                'actors': [{"name": actor.name, "age": actor.age, "gender": actor.gender.value} for actor in actors],
+                }), 200
+        except:
+            abort(404)
 
 
     @app.errorhandler(404)

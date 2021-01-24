@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script>
+    YOUR_DOMAIN = "d5-tariq.us.auth0.com"
+    API_IDENTIFIER = "capstone"
+    response_type = "token"
+    YOUR_CLIENT_ID="wHFdUbCjmh3rDJBh1JkX8Rp2bDkqG24P"
+    redirect_uri = "https://127.0.0.1:8080/login-result"
+
+AUTH0_AUTHORIZE_URL = "https://" + YOUR_DOMAIN + "/authorize?audience=" + API_IDENTIFIER + "&response_type=" + response_type + "&client_id=" + YOUR_CLIENT_ID + "&redirect_uri=" + redirect_uri
+  </script>
+</head>
+<body>
+  <a href="https://d5-tariq.us.auth0.com/authorize?
+  audience=capstone&
+  response_type=token&
+  client_id=wHFdUbCjmh3rDJBh1JkX8Rp2bDkqG24P&
+  redirect_uri=https://127.0.0.1:8080/login-result">Login</a>
+
+</body>
+</html>

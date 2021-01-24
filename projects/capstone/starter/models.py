@@ -117,5 +117,23 @@ class Actor(db.Model):
 class MovieActor(db.Model):
     __tablename__ = 'movies_actors'
     id = db.Column(db.Integer, primary_key=True)
-    movie_id = db.Column(db.Integer, db.ForeignKey('actors.id'))
-    actor_id = db.Column(db.Integer, db.ForeignKey('movies.id'))
+    movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'))
+    actor_id = db.Column(db.Integer, db.ForeignKey('actors.id'))
+   
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+          'id': self.id,
+          'movie_id': self.movie_id,
+          'actor_id': self.actor_id,
+        }
