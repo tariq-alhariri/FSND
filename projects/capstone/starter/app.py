@@ -6,6 +6,7 @@ from models import Actor, Movie, Gender,MovieActor, setup_db
 from auth import AuthError, requires_auth
 
 
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -52,12 +53,11 @@ def create_app(test_config=None):
         index = 0
 
         for index in range(len(actors)):
-            
             current_actor={
                 'id': actors[index]['id'],
                 'name': actors[index]['name'],
                 'age': actors[index]['age'],
-                'gender': actors[index]['gender'].value,
+                'gender': actors[index]['gender'],
                 }
             formated_actors.append(current_actor)
         return formated_actors
@@ -74,8 +74,10 @@ def create_app(test_config=None):
             )
         return(response)
 
+
     @app.route('/movies', methods=['GET'])
-    def get_movies():
+    @requires_auth('get:movies')
+    def get_movies(payload):
         try:
             movies = Movie.query.order_by(Movie.title).all()
             if len(movies) == 0:
@@ -92,7 +94,8 @@ def create_app(test_config=None):
 
 
     @app.route('/movies/<int:movie_id>', methods=['GET'])
-    def get_movie(movie_id):
+    @requires_auth('get:movies')
+    def get_movie(payload ,movie_id):
         try:
             movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
             return jsonify({
@@ -106,7 +109,8 @@ def create_app(test_config=None):
     
 
     @app.route('/movies', methods=['POST'])
-    def add_movie():
+    @requires_auth('post:movies')
+    def add_movie(payload):
         data = request.get_json()
         if (data.get('title') and data.get('release_date')):
             new_movie = Movie(
@@ -127,7 +131,8 @@ def create_app(test_config=None):
 
 
     @app.route('/movies/<int:movie_id>', methods=['PATCH'])
-    def update_movie(movie_id):
+    @requires_auth('patch:movies')
+    def update_movie(payload, movie_id):
         try:
             movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
             data = request.get_json()
@@ -145,7 +150,8 @@ def create_app(test_config=None):
             abort(404)
 
     @app.route('/movies/<int:movie_id>', methods=['DELETE'])
-    def delete_movie(movie_id):
+    @requires_auth('delete:movies')
+    def delete_movie(payload, movie_id):
         try:
             movie = Movie.query.filter(Movie.id == movie_id).one_or_none()
             if movie:
@@ -159,7 +165,8 @@ def create_app(test_config=None):
             abort(404)
 
     @app.route('/actors', methods=['GET'])
-    def get_actors():
+    @requires_auth('get:actors')
+    def get_actors(payload):
         try:
             actors = Actor.query.order_by(Actor.name).all()
             if len(actors) == 0:
@@ -173,8 +180,10 @@ def create_app(test_config=None):
             'actors': format_actors(current_actors),
             'status_code': 200
             })), 200
+
     @app.route('/actors/<int:actor_id>', methods=['GET'])
-    def get_actor(actor_id):
+    @requires_auth('get:actors')
+    def get_actor(payload, actor_id):
         try:
             actor = Actor.query.filter(Actor.id == actor_id).one_or_none()
             return jsonify({
@@ -188,7 +197,8 @@ def create_app(test_config=None):
     
     
     @app.route('/actors', methods=['POST'])
-    def add_actor():
+    @requires_auth('post:actors')
+    def add_actor(payload):
         data = request.get_json()
         if (data.get('name') and data.get('age') and data.get('gender')):
             new_actor = Actor(
@@ -210,7 +220,9 @@ def create_app(test_config=None):
 
 
     @app.route('/movie_actor', methods=['POST'])
-    def connect_movie_actor():
+    @requires_auth('patch:actors')
+    @requires_auth('patch:movies')
+    def connect_movie_actor(payload):
         data = request.get_json()
         movie_id = data.get('movie_id', None)
         actor_id = data.get('actor_id', None)
@@ -240,10 +252,11 @@ def create_app(test_config=None):
 
 
     @app.route('/movies/<int:movie_id>/actors', methods=['GET'])
-    def get_movie_actors(movie_id):
+    @requires_auth('get:movies')
+    @requires_auth('get:actors')
+    def get_movie_actors(payload, movie_id):
         try:
             actors = Movie.query.filter(Movie.id == movie_id).one_or_none().actors
-            print('------------------------------------------------>', actors[0].name)
             return jsonify({
                 'status_code': 200,
                 'success': True,
