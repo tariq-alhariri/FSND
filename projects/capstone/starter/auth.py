@@ -24,58 +24,68 @@ class AuthError(Exception):
 
 
 def get_token_auth_header():
-    """Obtains the Access Token from the Authorization Header
-    """
-    auth = request.headers.get('Authorization', None)
-    if not auth:
-        raise AuthError({
-            'code': 'authorization_header_missing',
-            'description': 'Authorization header is expected.'
-        }, 401)
+    try:
+        """Obtains the Access Token from the Authorization Header
+        """
+        auth = request.headers.get('Authorization', None)
+        if not auth:
+            abort(401)
+            raise AuthError({
+                'code': 'authorization_header_missing',
+                'description': 'Authorization header is expected.'
+            }, 401)
 
-    parts = auth.split()
-    if parts[0].lower() != 'bearer':
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Authorization header must start with "Bearer".'
-        }, 401)
-
-    elif len(parts) == 1:
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Token not found.'
-        }, 401)
-
-    elif len(parts) > 2:
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Authorization header must be bearer token.'
-        }, 401)
-
-    token = parts[1]
-    return token
-    auth_header = request.headers.get("Authorization", None)
-    if auth_header:
-        header_parts = auth_header.split(' ')
-
-        if len(header_parts) != 2 or not header_parts:
+        parts = auth.split()
+        if parts[0].lower() != 'bearer':
+            abort(401)
             raise AuthError({
                 'code': 'invalid_header',
-                'description': 'Authorization header must be in the format'
-                ' Bearer token'}, 401)
+                'description': 'Authorization header must start with "Bearer".'
+            }, 401)
 
-        elif header_parts[0].lower() != 'bearer':
+        elif len(parts) == 1:
+            abort(401)
             raise AuthError({
                 'code': 'invalid_header',
-                'description': 'Authorization header must start with Bearer'}, 401)
+                'description': 'Token not found.'
+            }, 401)
 
-        return header_parts[1]
-    else:
-        raise AuthError({
-            "code": "authorization_header_missing",
-            "description":
-            "Authorization header is expected"},
-            401)
+        elif len(parts) > 2:
+            abort(401)
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Authorization header must be bearer token.'
+            }, 401)
+
+        token = parts[1]
+        return token
+        auth_header = request.headers.get("Authorization", None)
+        if auth_header:
+            header_parts = auth_header.split(' ')
+
+            if len(header_parts) != 2 or not header_parts:
+                abort(401)
+                raise AuthError({
+                    'code': 'invalid_header',
+                    'description': 'Authorization header must be in the format'
+                    ' Bearer token'}, 401)
+
+            elif header_parts[0].lower() != 'bearer':
+                abort(401)
+                raise AuthError({
+                    'code': 'invalid_header',
+                    'description': 'Authorization header must start with Bearer'}, 401)
+
+            return header_parts[1]
+        else:
+            abort(401)
+            raise AuthError({
+                "code": "authorization_header_missing",
+                "description":
+                "Authorization header is expected"},
+                401)
+    except:
+        abort(401)
 
 
 
@@ -84,6 +94,7 @@ def check_permissions(permission, payload):
         abort(400)
 
     if permission not in payload['permissions']:
+        abort(401)
         raise AuthError({
             'code': 'unauthorized',
             'description': 'Permission Not found',
@@ -98,6 +109,7 @@ def verify_decode_jwt(token):
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
     if 'kid' not in unverified_header:
+        abort(401)
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization malformed.'
@@ -125,12 +137,14 @@ def verify_decode_jwt(token):
             return payload
 
         except jwt.ExpiredSignatureError:
+            abort(401)
             raise AuthError({
                 'code': 'token_expired',
                 'description': 'Token expired.'
             }, 401)
 
         except jwt.JWTClaimsError:
+            abort(401)
             raise AuthError({
                 'code': 'invalid_claims',
                 'description': 'Incorrect claims. Please, check the audience and issuer.'
@@ -153,6 +167,7 @@ def verify_decode_jwt(token):
 
     # Auth0 token should have a key id
     if 'kid' not in unverified_header:
+        abort(401)
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization malformed'
@@ -185,14 +200,14 @@ def verify_decode_jwt(token):
             return payload
 
         except jwt.ExpiredSignatureError:
-
+            abort(401)
             raise AuthError({
                 'code': 'token_expired',
                 'description': 'Token expired.'
             }, 401)
 
         except jwt.JWTClaimsError:
-
+            abort(401)
             raise AuthError({
                 'code': 'invalid_claims',
                 'description': 'Incorrect claims. Please, '
